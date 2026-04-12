@@ -20,141 +20,50 @@ server:
 ```
 import socket
 
-# DNS records (simulated database)
-dns_table = {
-    "google.com": "142.250.190.78",
-    "yahoo.com": "98.137.11.163",
-    "openai.com": "104.18.12.123",
-    "example.com": "93.184.216.34"
-}
-# Create UDP socket
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s = socket.socket()
+s.bind(("localhost", 8080))
+s.listen(1)
 
-# Bind server to localhost and port
-server_socket.bind(("127.0.0.1", 15353))
-
-print("DNS Server running on port 5353...\n")
+print("Server running at http://localhost:8080")
 
 while True:
-    # Receive domain request from client
-    message, client_address = server_socket.recvfrom(1024)
-    domain = message.decode()
-    print("Request received for:", domain)
-    # Check DNS table
-    ip = dns_table.get(domain, "Domain not found")
-    # Send response back to client
-    server_socket.sendto(ip.encode(), client_address)
+    c, addr = s.accept()
+    c.recv(1024)
+
+    with open("index.html", "r") as f:
+        content = f.read()
+
+    response = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n" + content
+    c.send(response.encode())
+    c.close()
 ```
+
 Client:
 ```
 import socket
-# Create UDP socket
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-server_address = ("127.0.0.1", 15353)
 
-# Get domain name from user
-domain = input("Enter domain name: ")
+c = socket.socket()
+c.connect(("localhost", 8080))
 
-# Send request to server
-client_socket.sendto(domain.encode(), server_address)
+c.send(b"GET / HTTP/1.1\r\nHost: localhost\r\n\r\n")
+print(c.recv(4096).decode())
 
-# Receive response
-ip_address, server = client_socket.recvfrom(1024)
-
-print("IP Address:", ip_address.decode())
-
-client_socket.close()
-```
-httpserver:
-```
-import socket
-
-s = socket.socket()
-s.bind(("localhost",8080))
-s.listen(1)
-
-print("Server running...")
-
-while True:
-    c,addr = s.accept()
-    
-    request = c.recv(1024).decode()
-    print("Request received")
-
-    if "GET" in request:
-        f = open("index.html","r")
-        data = f.read()
-        f.close()
-
-        response = "HTTP/1.1 200 OK\n\n" + data
-        c.send(response.encode())
-
-    elif "POST" in request:
-        data = request.split("\n\n")[1]
-
-        f = open("upload.txt","w")
-        f.write(data)
-        f.close()
-
-        c.send("HTTP/1.1 200 OK\n\nFile Uploaded".encode())
-
-    c.close()
-```
-httpclient:
-```
-import socket
-
-s = socket.socket()
-s.connect(("localhost",8080))
-
-ch = input("1.Download 2.Upload : ")
-
-# Download webpage
-if ch == "1":
-    req = "GET / HTTP/1.1\nHost: localhost\n\n"
-    s.send(req.encode())
-
-    data = s.recv(4096)
-    print(data.decode())
-
-# Upload file
-else:
-    msg = input("Enter data to upload: ")
-
-    req = "POST / HTTP/1.1\nHost: localhost\n\n" + msg
-    s.send(req.encode())
-
-    data = s.recv(1024)
-    print(data.decode())
-
-s.close()
+c.close()
 ```
 index.html:
 ```
 <html>
 <body>
-<h1>Hello HTTP Server</h1>
-<p>This page is sent from the Python server.</p>
+<h1>Hello from VS Code</h1>
+<p>This page is served using socket</p>
 </body>
 </html>
 ```
 ## OUTPUT :
-server
-
-
-
-<img width="887" height="230" alt="server py" src="https://github.com/user-attachments/assets/9a63b305-122f-4c9b-8af5-fb1299cc7de1" />
-
-
-
-
-client
-<img width="1146" height="250" alt="client py" src="https://github.com/user-attachments/assets/ec2bb2a7-38eb-4822-934a-b1dcf4b76fc2" />
-httpserver
-<img width="1002" height="237" alt="httpserver" src="https://github.com/user-attachments/assets/3a8b6d5a-06a3-4bf9-9a4c-b2e969b3a9cc" />
-httpclient
-<img width="995" height="249" alt="httpclient" src="https://github.com/user-attachments/assets/d102926b-90b6-4c50-a963-9c7efc308d64" />
-
+server :
+<img width="1117" height="234" alt="Screenshot 2026-04-12 232321" src="https://github.com/user-attachments/assets/b35dcd55-c921-4281-ae88-28c2443a8903" />
+Client :
+<img width="1281" height="334" alt="Screenshot 2026-04-12 232339" src="https://github.com/user-attachments/assets/a57602ac-0210-45ae-be60-ee6807e82afa" />
 
 ## Result :
 Thus the socket for HTTP for web page upload and download created and Executed
